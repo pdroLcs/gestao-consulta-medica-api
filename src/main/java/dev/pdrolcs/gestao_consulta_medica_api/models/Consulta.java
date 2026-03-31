@@ -1,10 +1,7 @@
 package dev.pdrolcs.gestao_consulta_medica_api.models;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
@@ -12,8 +9,7 @@ import java.time.LocalDateTime;
 @Table(name = "consultas")
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class Consulta {
 
     @Id
@@ -22,17 +18,17 @@ public class Consulta {
 
     @ManyToOne
     @JoinColumn(name = "paciente_id", nullable = false)
-    private Paciente paciente;
+    private final Paciente paciente;
 
     @ManyToOne
     @JoinColumn(name = "medico_id", nullable = false)
-    private Medico medico;
+    private final Medico medico;
 
     @Column(nullable = false)
-    private LocalDateTime dataHora;
+    private final LocalDateTime dataHora;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private StatusEnum status;
+    private final StatusEnum status;
 
 }
