@@ -1,6 +1,8 @@
 package dev.pdrolcs.gestao_consulta_medica_api.services;
 
 import dev.pdrolcs.gestao_consulta_medica_api.dto.PacienteRequestDTO;
+import dev.pdrolcs.gestao_consulta_medica_api.exceptions.BusinessException;
+import dev.pdrolcs.gestao_consulta_medica_api.exceptions.ResourceNotFoundException;
 import dev.pdrolcs.gestao_consulta_medica_api.models.Paciente;
 import dev.pdrolcs.gestao_consulta_medica_api.repositories.PacienteRepository;
 import org.junit.jupiter.api.Test;
@@ -13,8 +15,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -43,10 +44,19 @@ class PacienteServiceTest {
     }
 
     @Test
+    void deveLancarExcecaoQuandoCpfJaExiste() {
+        var paciente = new PacienteRequestDTO("João", "123", LocalDate.now());
+
+        when(pacienteRepository.existsByCpf(paciente.cpf())).thenReturn(true);
+
+        assertThrows(BusinessException.class, () -> pacienteService.criarPaciente(paciente));
+    }
+
+    @Test
     void deveListarPacientesComSucesso() {
 
-        var paciente1 = new Paciente(1L, "João", "123", LocalDate.of(2004, 4, 21));
-        var paciente2 = new Paciente(2L, "Maria", "456", LocalDate.of(2004, 5, 11));
+        var paciente1 = new Paciente(1L, "João", "123", LocalDate.now());
+        var paciente2 = new Paciente(2L, "Maria", "456", LocalDate.now());
 
         when(pacienteRepository.findAll()).thenReturn(List.of(paciente1, paciente2));
 
@@ -59,11 +69,18 @@ class PacienteServiceTest {
     }
 
     @Test
+    void deveRetornarListaVaziaQuandoNaoTiverPacientes() {
+        when(pacienteRepository.findAll()).thenReturn(List.of());
+        var resultado = pacienteService.listarPacientes();
+        assertTrue(resultado.isEmpty());
+    }
+
+    @Test
     void deveBuscarPorIdComSucesso() {
 
         Long id = 1L;
 
-        var paciente = new Paciente(id, "João", "123", LocalDate.of(2004, 4, 21));
+        var paciente = new Paciente(id, "João", "123", LocalDate.now());
 
         when(pacienteRepository.findById(id)).thenReturn(Optional.of(paciente));
 
@@ -74,5 +91,11 @@ class PacienteServiceTest {
         assertEquals("João", resultado.nome());
         assertEquals("123", resultado.cpf());
 
+    }
+
+    @Test
+    void deveLancarExcecaoQuandoNaoEncontrarPacientePorId() {
+        when(pacienteRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThrows(ResourceNotFoundException.class, () -> pacienteService.buscarPorId(1L));
     }
 }
