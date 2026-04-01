@@ -1,17 +1,17 @@
 package dev.pdrolcs.gestao_consulta_medica_api.dto;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
 
 public record PacienteRequestDTO(
 
-        @NotBlank
+        @NotNull
         String nome,
 
-        @NotBlank
+        @NotNull
         String cpf,
 
-        @NotBlank
+        @NotNull
         LocalDate dataNascimento
 ) { }
