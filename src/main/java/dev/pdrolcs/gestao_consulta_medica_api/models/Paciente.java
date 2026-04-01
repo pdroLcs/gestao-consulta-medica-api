@@ -29,4 +29,9 @@ public class Paciente {
     @Column(nullable = false)
     private LocalDate dataNascimento;
 
+    public Paciente(String nome, String cpf, LocalDate dataNascimento) {
+        this.nome = nome;
+        this.cpf = cpf;
+        this.dataNascimento = dataNascimento;
+    }
 }
