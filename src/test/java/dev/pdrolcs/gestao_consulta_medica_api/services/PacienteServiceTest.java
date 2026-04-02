@@ -5,6 +5,8 @@ import dev.pdrolcs.gestao_consulta_medica_api.exceptions.BusinessException;
 import dev.pdrolcs.gestao_consulta_medica_api.exceptions.ResourceNotFoundException;
 import dev.pdrolcs.gestao_consulta_medica_api.models.Paciente;
 import dev.pdrolcs.gestao_consulta_medica_api.repositories.PacienteRepository;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -28,74 +30,92 @@ class PacienteServiceTest {
     @InjectMocks
     private PacienteService pacienteService;
 
-    @Test
-    void deveCriarPacienteComSucesso() {
+    @Nested
+    class CriarPaciente {
 
-        var paciente = new PacienteRequestDTO("João", "123", LocalDate.now());
+        @Test
+        @DisplayName("Deve criar paciente com sucesso")
+        void deveCriarPacienteComSucesso() {
 
-        when(pacienteRepository.existsByCpf(paciente.cpf())).thenReturn(false);
-        when(pacienteRepository.save(any(Paciente.class))).thenAnswer(invocation -> invocation.getArgument(0));
+            var paciente = new PacienteRequestDTO("João", "123", LocalDate.now());
 
-        var resultado = pacienteService.criarPaciente(paciente);
+            when(pacienteRepository.existsByCpf(paciente.cpf())).thenReturn(false);
+            when(pacienteRepository.save(any(Paciente.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertNotNull(resultado);
-        assertEquals("João", resultado.nome());
+            var resultado = pacienteService.criarPaciente(paciente);
 
+            assertNotNull(resultado);
+            assertEquals("João", resultado.nome());
+
+        }
+
+        @Test
+        @DisplayName("Deve lançar exceção quando CPF já existe")
+        void deveLancarExcecaoQuandoCpfJaExiste() {
+            var paciente = new PacienteRequestDTO("João", "123", LocalDate.now());
+
+            when(pacienteRepository.existsByCpf(paciente.cpf())).thenReturn(true);
+
+            assertThrows(BusinessException.class, () -> pacienteService.criarPaciente(paciente));
+        }
     }
 
-    @Test
-    void deveLancarExcecaoQuandoCpfJaExiste() {
-        var paciente = new PacienteRequestDTO("João", "123", LocalDate.now());
+    @Nested
+    class ListarPacientes {
 
-        when(pacienteRepository.existsByCpf(paciente.cpf())).thenReturn(true);
+        @Test
+        @DisplayName("Deve listar pacientes com sucesso")
+        void deveListarPacientesComSucesso() {
 
-        assertThrows(BusinessException.class, () -> pacienteService.criarPaciente(paciente));
+            var paciente1 = new Paciente(1L, "João", "123", LocalDate.now());
+            var paciente2 = new Paciente(2L, "Maria", "456", LocalDate.now());
+
+            when(pacienteRepository.findAll()).thenReturn(List.of(paciente1, paciente2));
+
+            var resultado = pacienteService.listarPacientes();
+
+            assertEquals(2, resultado.size());
+            assertEquals("João", resultado.getFirst().nome());
+            assertEquals("Maria", resultado.get(1).nome());
+
+        }
+
+        @Test
+        @DisplayName("Deve retornar lista vazia quando não tiver pacientes")
+        void deveRetornarListaVaziaQuandoNaoTiverPacientes() {
+            when(pacienteRepository.findAll()).thenReturn(List.of());
+            var resultado = pacienteService.listarPacientes();
+            assertTrue(resultado.isEmpty());
+        }
     }
 
-    @Test
-    void deveListarPacientesComSucesso() {
+    @Nested
+    class BuscarPacientePorId {
 
-        var paciente1 = new Paciente(1L, "João", "123", LocalDate.now());
-        var paciente2 = new Paciente(2L, "Maria", "456", LocalDate.now());
+        @Test
+        @DisplayName("Deve buscar por id com sucesso")
+        void deveBuscarPorIdComSucesso() {
 
-        when(pacienteRepository.findAll()).thenReturn(List.of(paciente1, paciente2));
+            Long id = 1L;
 
-        var resultado = pacienteService.listarPacientes();
+            var paciente = new Paciente(id, "João", "123", LocalDate.now());
 
-        assertEquals(2, resultado.size());
-        assertEquals("João", resultado.getFirst().nome());
-        assertEquals("Maria", resultado.get(1).nome());
+            when(pacienteRepository.findById(id)).thenReturn(Optional.of(paciente));
 
-    }
+            var resultado = pacienteService.buscarPorId(id);
 
-    @Test
-    void deveRetornarListaVaziaQuandoNaoTiverPacientes() {
-        when(pacienteRepository.findAll()).thenReturn(List.of());
-        var resultado = pacienteService.listarPacientes();
-        assertTrue(resultado.isEmpty());
-    }
+            assertNotNull(resultado);
+            assertEquals(id, resultado.id());
+            assertEquals("João", resultado.nome());
+            assertEquals("123", resultado.cpf());
 
-    @Test
-    void deveBuscarPorIdComSucesso() {
+        }
 
-        Long id = 1L;
-
-        var paciente = new Paciente(id, "João", "123", LocalDate.now());
-
-        when(pacienteRepository.findById(id)).thenReturn(Optional.of(paciente));
-
-        var resultado = pacienteService.buscarPorId(id);
-
-        assertNotNull(resultado);
-        assertEquals(id, resultado.id());
-        assertEquals("João", resultado.nome());
-        assertEquals("123", resultado.cpf());
-
-    }
-
-    @Test
-    void deveLancarExcecaoQuandoNaoEncontrarPacientePorId() {
-        when(pacienteRepository.findById(1L)).thenReturn(Optional.empty());
-        assertThrows(ResourceNotFoundException.class, () -> pacienteService.buscarPorId(1L));
+        @Test
+        @DisplayName("Deve lançar exceção quando não encontrar paciente por id")
+        void deveLancarExcecaoQuandoNaoEncontrarPacientePorId() {
+            when(pacienteRepository.findById(1L)).thenReturn(Optional.empty());
+            assertThrows(ResourceNotFoundException.class, () -> pacienteService.buscarPorId(1L));
+        }
     }
 }
