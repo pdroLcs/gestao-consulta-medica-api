@@ -13,6 +13,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -21,6 +22,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
+import static dev.pdrolcs.gestao_consulta_medica_api.models.StatusEnum.AGENDADA;
+import static dev.pdrolcs.gestao_consulta_medica_api.models.StatusEnum.CANCELADA;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -42,13 +45,16 @@ class ConsultaServiceTest {
 
     private Paciente pacienteTeste;
     private Medico medicoTeste;
+    private Consulta consultaTeste;
     private ConsultaRequestDTO requestTeste;
+    private LocalDateTime dataFutura;
 
     @BeforeEach
     void setup() {
         pacienteTeste = new Paciente(1L, "Pedro", "123", LocalDate.of(2006, 3, 13));
         medicoTeste = new Medico(1L, "João", "Veterinário");
-        LocalDateTime dataFutura = LocalDateTime.now().plusDays(1);
+        dataFutura = LocalDateTime.now().plusDays(1);
+        consultaTeste = new Consulta(pacienteTeste, medicoTeste, dataFutura, AGENDADA);
         requestTeste = new ConsultaRequestDTO(1L, 1L, dataFutura);
     }
 
@@ -92,19 +98,47 @@ class ConsultaServiceTest {
         }
     }
 
-    @Test
-    void cancelarConsulta() {
-    }
+    @Nested
+    class CancelarConsulta {
 
-    @Test
-    void listarConsultas() {
-    }
+        @Test
+        @DisplayName("Deve cancelar consulta com sucesso")
+        void cancelarConsulta() {
 
-    @Test
-    void listarConsultaPorMedico() {
-    }
+            when(consultaRepository.findById(any())).thenReturn(Optional.of(consultaTeste));
 
-    @Test
-    void listarConsultaPorPaciente() {
+            consultaService.cancelarConsulta(consultaTeste.getId());
+
+            ArgumentCaptor<Consulta> captor = ArgumentCaptor.forClass(Consulta.class);
+
+            verify(consultaRepository).save(captor.capture());
+
+            var consultaSalva = captor.getValue();
+
+            assertEquals(CANCELADA, consultaSalva.getStatus());
+
+        }
+
+        @Test
+        @DisplayName("Deve lançar exceção quando consulta não for encontrada")
+        void consultaNaoEncontrada() {
+
+            when(consultaRepository.findById(any())).thenReturn(Optional.empty());
+            assertThrows(BusinessException.class, () -> consultaService.cancelarConsulta(1L));
+            verify(consultaRepository, never()).save(any());
+
+        }
+
+        @Test
+        @DisplayName("Deve lançar exceção quando consulta não está agendada")
+        void consultaNaoAgendada() {
+
+            var consulta = new Consulta(pacienteTeste, medicoTeste, dataFutura, CANCELADA);
+
+            when(consultaRepository.findById(1L)).thenReturn(Optional.of(consulta));
+            assertThrows(BusinessException.class, () -> consultaService.cancelarConsulta(1L));
+            verify(consultaRepository, never()).save(any());
+
+        }
     }
 }
