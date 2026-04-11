@@ -1,18 +1,18 @@
 CREATE TABLE pacientes (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     nome VARCHAR(255) NOT NULL,
     cpf VARCHAR(14) UNIQUE NOT NULL,
     data_nascimento DATE NOT NULL
 );
 
 CREATE TABLE medicos (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     nome VARCHAR(255) NOT NULL,
     especialidade VARCHAR(255) NOT NULL
 );
 
 CREATE TABLE consultas (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     paciente_id BIGINT NOT NULL,
     medico_id BIGINT NOT NULL,
     data_hora TIMESTAMP NOT NULL,
