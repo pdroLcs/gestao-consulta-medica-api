@@ -40,7 +40,7 @@ public class PacienteController {
 
     @GetMapping("/{id}")
     @Operation(summary = "Lista o paciente pelo id")
-    public ResponseEntity<PacienteResponseDTO> buscarPorId(@RequestParam Long id) {
+    public ResponseEntity<PacienteResponseDTO> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(pacienteService.buscarPorId(id));
     }
 }
